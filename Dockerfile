@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
 COPY docker/build-realesrgan-wheels.sh /usr/local/bin/build-realesrgan-wheels.sh
 RUN bash /usr/local/bin/build-realesrgan-wheels.sh /wheels
 
-FROM python:3.14-slim
+FROM nvidia/cuda:13.3.0-devel-ubuntu24.04
+ARG DEBIAN_FRONTEND=noninteractive
 
 # System deps. tmux is required by Cookbook for background downloads/serves.
 # openssh-client is required for Cookbook remote server tests, setup, probes,
@@ -20,9 +21,14 @@ FROM python:3.14-slim
 # gosu lets the entrypoint drop privileges cleanly so signals still reach
 # uvicorn directly (no extra shell layer like `su`/`sudo` would add).
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    dirmngr \
+    gnupg2 \
+    lsb-release \
+    software-properties-common \
     build-essential \
     cmake \
-    curl \
     git \
     nodejs \
     npm \
@@ -32,7 +38,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0t64 \
     libxcb1 \
-    libmagic1 \
+    libmagic1t64 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN add-apt-repository -y ppa:deadsnakes/ppa \
+    && apt-get update && apt-get install -y --no-install-recommends \
+       python3.14 \
+       python3.14-venv \
+       python3.14-dev \
+    && python3.14 -m ensurepip --upgrade \
+    && python3.14 -m pip install --no-cache-dir --break-system-packages --upgrade pip setuptools wheel \
+    && ln -sf /usr/bin/python3.14 /usr/local/bin/python \
+    && ln -sf /usr/bin/python3.14 /usr/local/bin/python3 \
+    && ln -sf /usr/bin/python3.14 /usr/bin/python3 \
+    && ln -sf /usr/bin/python3.14 /usr/bin/python \
     && rm -rf /var/lib/apt/lists/*
 
 # libgl1/libglib2.0-0t64/libxcb1 are runtime shared libs (libGL.so.1,
@@ -73,13 +92,13 @@ WORKDIR /app
 # are opt-in so the default image stays MIT-core; see requirements-optional.txt.
 ARG INSTALL_OPTIONAL=false
 COPY requirements.txt requirements-optional.txt ./
-RUN pip install --no-cache-dir -r requirements.txt \
-    && if [ "$INSTALL_OPTIONAL" = "true" ]; then pip install --no-cache-dir -r requirements-optional.txt; fi
+RUN python3.14 -m pip install --no-cache-dir --break-system-packages --ignore-installed -r requirements.txt \
+    && if [ "$INSTALL_OPTIONAL" = "true" ]; then python3.14 -m pip install --no-cache-dir --break-system-packages --ignore-installed -r requirements-optional.txt; fi
 
 # python-magic powers content-based MIME sniffing in src/upload_handler.py.
-# Image-only (not in requirements.txt) because it needs the libmagic1 system
+# Image-only (not in requirements.txt) because it needs the libmagic1t64 system
 # lib installed above; see the apt note near the top of this stage.
-RUN pip install --no-cache-dir python-magic==0.4.27
+RUN python3.14 -m pip install --no-cache-dir --break-system-packages --ignore-installed python-magic==0.4.27
 
 # Pre-install the patched basicsr/gfpgan/facexlib wheels built in the
 # realesrgan-wheels stage (--no-deps keeps the image lean — torch & friends are
@@ -87,7 +106,7 @@ RUN pip install --no-cache-dir python-magic==0.4.27
 # satisfied, the Cookbook's plain `pip install realesrgan` resolves them from
 # wheels instead of rebuilding the sdists that fail on Python 3.14.
 COPY --from=realesrgan-wheels /wheels/ /tmp/odysseus-wheels/
-RUN pip install --no-cache-dir --no-deps /tmp/odysseus-wheels/*.whl \
+RUN python3.14 -m pip install --no-cache-dir --break-system-packages --no-deps /tmp/odysseus-wheels/*.whl \
     && rm -rf /tmp/odysseus-wheels
 
 # Copy app code

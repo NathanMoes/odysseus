@@ -14,7 +14,7 @@ set -e
 PUID="${PUID:-1000}"
 PGID="${PGID:-1000}"
 GOSU_BIN="$(command -v gosu)"
-PYTHON_BIN="$(command -v python)"
+PYTHON_BIN="$(command -v python3.14 || command -v python3 || command -v python || true)"
 
 # Reuse an existing matching group/user if the host's UID/GID already
 # corresponds to one in /etc/passwd (e.g. when the image is rebuilt

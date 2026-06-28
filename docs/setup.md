@@ -166,6 +166,9 @@ files instead, which bundle the base stack plus the GPU settings:
 - `docker-compose.gpu-amd.yml` — still requires host ROCm/kfd/DRI setup, the
   `video`/`render` group membership, and `RENDER_GID` when needed.
 
+Note: the Odysseus GPU Docker image is now built from `nvidia/cuda:13.3.0-devel-ubuntu24.04`, so the container includes CUDA runtime and toolkit headers.
+GPU passthrough still only provides device access; you must install a CUDA-enabled inference package via Cookbook → Dependencies or pip for real GPU model serving.
+
 The base `docker-compose.yml` plus the `docker/gpu.*.yml` overlays remain the
 source of truth; the standalone files mirror them for single-file deployments.
 
