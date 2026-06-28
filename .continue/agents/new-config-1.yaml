@@ -1,0 +1,17 @@
+models:
+  - title: "Qwen3.6-35B (Local)"
+    provider: openai
+    model: "/app/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf"
+    apiBase: "http://localhost:8000/v1"
+    apiKey: "not-needed"
+
+tabAutocompleteModel:
+  title: "Qwen3.6-35B (Local)"
+  provider: openai
+  model: "/app/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf"
+  apiBase: "http://localhost:8000/v1"
+  apiKey: "not-needed"
+
+tabAutocompleteOptions:
+  useCopyPrompt: false
+  useCache: true
